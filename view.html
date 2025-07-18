@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ViewPoll</title>
+</head>
+<style>
+    
+    body {
+        background-image: url("../assets/view.jpg");
+        background-size: cover;
+        background-position: center;
+        min-height: 100vh;
+        width: 100%;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-family: 'Segoe UI', Arial, sans-serif;
+    }
+    navbar {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        padding: 18px 0;
+        z-index: 1000;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+    ol {
+        display: flex;
+        justify-content: center;
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    li {
+        margin: 0 25px;
+    }
+    navbar a {
+        color: #fff;
+        text-decoration: none;
+        font-size: 1.1rem;
+        font-weight: 500;
+        transition: color 0.2s;
+    }
+    navbar a:hover {
+        color: #00e6e6;
+    }
+    .main-content {
+        margin-top: 120px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        padding: 0 10px;
+        box-sizing: border-box;
+    }
+    h1{
+        background-color: rgba(10, 0, 0, 0.8);
+        color: crimson;
+        font-size: 2.5rem;
+        padding: 20px 30px;
+        border-radius: 8px;
+        text-align: center;
+    }
+    h1:hover{
+        color:rgb(250, 0, 61);
+        background-color: rgba(10, 0, 0, 0.9);
+    }
+    p{
+        background: rgba(0, 0, 0, 0.7);
+        color: rgba(255, 0, 255, 0.642);
+        font-size: 1.2rem;
+        padding: 20px 30px;
+        border-radius: 8px;
+        text-align: center;
+        margin: 10px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+    }
+    .vote-btn{
+        border-radius: 8px;
+        background: linear-gradient(180deg, #000000 0%, #00b3b3 100%);
+        color: black;
+        padding: 8px 18px;
+        font-size: 1rem;
+        margin-left: 10px;
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s, color 0.2s, transform 0.2s;
+    }
+    .vote-btn:hover{
+        background:linear-gradient(90deg, #00b3b3 0%, #000000 100%);
+        color: #00e6e6;
+        transform: scale(1.05);
+    }
+    /* Responsive styles */
+    @media screen and (max-width: 600px) {
+        h1, p {
+            font-size: 1.1rem;
+            padding: 12px 10px;
+        }
+        .main-content {
+            margin-top: 70px;
+            padding: 0 2vw;
+        }
+        .vote-btn {
+            font-size: 0.98rem;
+            padding: 7px 10px;
+            margin-left: 0;
+            margin-top: 8px;
+            width: 100%;
+        }
+        ol {
+            flex-direction: column;
+            gap: 10px;
+        }
+        li {
+            margin: 0 10px;
+        }
+        .poll-card, .main-content > div[style] {
+            padding: 12px !important;
+            max-width: 98vw !important;
+            box-sizing: border-box;
+        }
+        ul {
+            padding-left: 10px !important;
+        }
+    }
+</style>
+<body>
+    <navbar>
+        <ol>
+            <li><a href="/index.html">Home</a></li>
+            <li><a href="/Create.html">Create polls</a></li>
+            <li><a href="/alter.html">Alter Polls</a></li>
+        </ol>
+    </navbar>
+    <div class="main-content">
+        <h1>View Polls</h1>
+        <p><b> Vote for the polls you like and see the results in real-time.
+             Your opinion matters!</b> </p>
+        <div id="polls-container"></div>
+</body>
+<!-- ...existing code... -->
+<script>
+    window.onload = async function() {
+        const container = document.getElementById('polls-container');
+        // Function to render polls
+        async function renderPolls() {
+            try {
+                const response = await fetch('http://localhost:8080/polls');
+                if (!response.ok) throw new Error('Failed to fetch polls');
+                const polls = await response.json();
+                if (polls.length === 0) {
+                    container.innerHTML = '<p>No polls available</p>';
+                    return;
+                }
+                container.innerHTML = polls.map((poll, pollIdx) => `
+                    <div style="background:rgba(0, 0, 0, 0.7);margin:20px; padding: 20px;border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                        <h2 style="color:crimson;">${poll.question}</h2>
+                        <ul style="padding-left:20px;">
+                            ${poll.options.map((opt, idx) => 
+                                `<li style="color:aqua;">
+                                    ${opt.voteoption} 
+                                      <b style="color:magenta;">(${opt.voteCount} votes)</b>
+                                    <button class="vote-btn" onclick="vote(${poll.id}, ${idx})" >Vote</button>
+                                 </li>`
+                            ).join('')}
+                        </ul>
+                    </div>
+                `).join('');
+            } catch (err) {
+                container.innerHTML = "<p style='color:red;'>Failed to load polls.</p>";
+                console.error(err);
+            }
+        }
+
+        // Expose vote function globally
+        window.vote = async function(pollId, optionIndex) {
+            try {
+                const response = await fetch('http://localhost:8080/polls/vote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pollId: pollId, optionIndex: optionIndex })
+                });
+                if (!response.ok) {
+                    alert('Failed to vote!');
+                    return;
+                }
+                await renderPolls(); // Refresh polls after voting
+            } catch (err) {
+                alert('Error voting!');
+                console.error(err);
+            }
+        };
+
+        // Initial render
+        renderPolls();
+    };
+</script>
+<!-- ...existing code... -->
+</html>
