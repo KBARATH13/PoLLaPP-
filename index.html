@@ -3,155 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POLL PORTAL</title>
-<style>
-    body {
-        background-image: url("../assets/home.jpg");
-        background-size: cover;
-        background-position: center;
-        min-height: 100vh;
-        width: 100%;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        font-family: 'Segoe UI', Arial, sans-serif;
-    }
-    navbar {
-        display: block;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        padding: 18px 0;
-        z-index: 1000;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    }
-    ol {
-        display: flex;
-        justify-content: center;
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    li {
-        margin: 0 25px;
-    }
-    navbar a {
-        color: #fff;
-        text-decoration: none;
-        font-size: 1.1rem;
-        font-weight: 500;
-        transition: color 0.2s;
-    }
-    navbar a:hover {
-        color: #00e6e6;
-    }
-    .main-content {
-        margin-top: 120px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        padding: 0 10px;
-        box-sizing: border-box;
-    }
-    h1{
-        background-color: rgba(10, 0, 0, 0.8);
-        color: crimson;
-        font-size: 2.5rem;
-        padding: 20px 30px;
-        border-radius: 8px;
-        text-align: center;
-    }
-    h1:hover{
-        color:rgb(250, 0, 61);
-        background-color: rgba(10, 0, 0, 0.9);
-    }
-    p{
-        background: rgba(0, 0, 0, 0.7);
-        color: rgba(0,255,255,0.7);
-        font-size: 1.2rem;
-        padding: 20px 30px;
-        border-radius: 8px;
-        text-align: center;
-        margin: 10px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    }
-    .button-group {
-        display: flex;
-        gap: 30px;
-        margin-bottom: 40px;
-        justify-content: center;
-        flex-wrap: wrap;
-        width: 100%;
-    }
-    .main-btn {
-        padding: 14px 36px;
-        font-size: 1.1rem;
-        font-weight: bold;
-        border: none;
-        border-radius: 8px;
-        background: linear-gradient(180deg, #000000 0%, #00b3b3 100%);
-        color: white;
-        cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-        transition: background 0.2s, transform 0.2s;
-        margin-bottom: 10px;
-    }
-    .main-btn:hover {
-        background: linear-gradient(180deg, #00b3b3 0%, #000000 100%);
-        transform: translateY(-2px) scale(1.04);
-    }
-    @media screen and (max-width: 600px) {
-        h1, p {
-            font-size: 1.1rem;
-            padding: 12px 10px;
-        }
-        .main-btn {
-            padding: 10px 18px;
-            font-size: 1rem;
-            width: 100%;
-            min-width: 0;
-        }
-        .button-group {
-            flex-direction: column;
-            gap: 18px;
-            margin-bottom: 20px;
-        }
-        navbar ol {
-            flex-direction: column;
-            gap: 10px;
-        }
-        navbar {
-            padding: 10px 0;
-        }
-        li {
-            margin: 0 10px;
-        }
-        .main-content {
-            margin-top: 80px;
-            padding: 0 2vw;
-        }
-    }
-</style>
+    <meta name="theme-color" content="#f2eddf">
+    <title>Pollspace — Make every opinion count</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-    <navbar>
-        <ol>
-            <li><a href="/create.html">Create Polls</a></li>
-            <li><a href="/view.html">View Polls</a></li>
-            <li><a href="/alter.html">Alter Polls</a></li>
-        </ol>
-    </navbar>
-    <div class="main-content">
-        <h1>Welcome to Poll Portal</h1>
-        <p>Create polls as you wish and let your friends, colleagues, and neighbours vote in them!</p>
-        <div class="button-group">
-            <a href="create.html"><button class="main-btn">Create Poll</button></a>
-            <a href="view.html"><button class="main-btn">View Polls</button></a>
+<body class="page-home">
+    <header class="site-header">
+        <div class="nav-wrap">
+            <a class="brand" href="index.html" aria-label="Pollspace home">
+                <span class="brand-mark" aria-hidden="true"></span>
+                Pollspace
+            </a>
+            <nav class="site-nav" aria-label="Main navigation">
+                <a href="view.html">Explore</a>
+                <a href="alter.html">Manage</a>
+                <a class="nav-cta" href="create.html">Create a poll</a>
+            </nav>
         </div>
-    </div>
+    </header>
+    <main class="page-shell page-shell--wide">
+        <section class="home-hero">
+            <div class="home-intro">
+                <p class="eyebrow"><span class="eyebrow-dot"></span> A little space for every voice</p>
+                <h1>Good decisions start with <span class="hero-title-accent">good questions.</span></h1>
+                <p class="hero-copy">Lunch plans. Weekend debates. The playlist question nobody can settle. Put it to a vote—no accounts, no names, just people weighing in.</p>
+                <div class="hero-actions">
+                    <a class="button" href="create.html">Put a question out there <span aria-hidden="true">↗</span></a>
+                    <a class="button button--secondary" href="view.html">See what people are asking</a>
+                </div>
+            </div>
+            <aside class="community-note" aria-label="Anonymous voting: no account or voter names are collected">
+                <span class="note-kicker">The ground rules</span>
+                <p class="note-line"><span>01</span> No accounts</p>
+                <p class="note-line"><span>02</span> No voter names</p>
+                <p class="note-line"><span>03</span> Just honest answers</p>
+                <span class="note-scribble" aria-hidden="true">✓</span>
+            </aside>
+        </section>
+        <section class="feature-grid" aria-label="What you can do">
+            <article class="feature-card">
+                <span class="feature-icon" aria-hidden="true">＋</span>
+                <h2>Ask anything</h2>
+                <p>Turn your question into a quick poll with a few clear choices.</p>
+            </article>
+            <article class="feature-card">
+                <span class="feature-icon" aria-hidden="true">↗</span>
+                <h2>See the pulse</h2>
+                <p>Vote on the questions that matter and watch the results come in.</p>
+            </article>
+            <article class="feature-card">
+                <span class="feature-icon" aria-hidden="true">✎</span>
+                <h2>Keep it yours</h2>
+                <p>Your secret link lets you manage visibility, replace invite links, or remove a poll.</p>
+            </article>
+        </section>
+    </main>
+    <footer class="site-footer">No accounts. No voter names. Just the conversation.</footer>
 </body>
 </html>

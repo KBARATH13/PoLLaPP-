@@ -3,332 +3,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create</title>
+    <meta name="theme-color" content="#f2eddf">
+    <title>Create a poll — Pollspace</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
-<style>
-    body {
-        background-image: url("../assets/create.jpg");
-        background-size: cover;
-        background-position: center;
-        min-height: 100vh;
-        width: 100%;
-        margin: 0;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        font-family: 'Segoe UI', Arial, sans-serif;
-    }
+<body class="page-create">
+    <header class="site-header">
+        <div class="nav-wrap">
+            <a class="brand" href="index.html" aria-label="Pollspace home">
+                <span class="brand-mark" aria-hidden="true"></span>
+                Pollspace
+            </a>
+            <nav class="site-nav" aria-label="Main navigation">
+                <a href="view.html">Explore</a>
+                <a href="alter.html">Manage</a>
+                <a class="nav-cta" href="create.html" aria-current="page">Create a poll</a>
+            </nav>
+        </div>
+    </header>
+    <main class="page-shell">
+        <p class="eyebrow"><span class="eyebrow-dot"></span> Put a question on the board</p>
+        <div class="page-heading">
+            <div>
+                <h1>Create a poll</h1>
+                <p class="page-description">Keep it simple: one real question, a few possible answers, and room for people to weigh in.</p>
+            </div>
+        </div>
+        <form class="surface-card form-card" id="pollForm">
+            <div class="question-field">
+                <label class="field-label" for="question">Your question</label>
+                <input class="text-input" type="text" id="question" name="question" placeholder="e.g. Where should we eat?" maxlength="250" required>
+            </div>
+            <div class="options-heading">
+                <p class="field-label">Answer options <small>2 to 5 choices</small></p>
+            </div>
+            <div class="option-list" id="option-group">
+                <div class="option-field">
+                    <span class="option-number" aria-hidden="true">1</span>
+                    <input class="text-input" type="text" id="option1" name="option1" aria-label="Option 1" placeholder="First option" maxlength="120" required>
+                    <button class="icon-button remove-option" type="button" aria-label="Remove option 1" disabled>×</button>
+                </div>
+                <div class="option-field">
+                    <span class="option-number" aria-hidden="true">2</span>
+                    <input class="text-input" type="text" id="option2" name="option2" aria-label="Option 2" placeholder="Second option" maxlength="120" required>
+                    <button class="icon-button remove-option" type="button" aria-label="Remove option 2" disabled>×</button>
+                </div>
+            </div>
+            <div class="poll-visibility">
+                <label class="field-label" for="visibility">Who can find this poll?</label>
+                <select class="text-input" id="visibility" name="visibility">
+                    <option value="public">Public — listed for everyone</option>
+                    <option value="private">Private — invite link only</option>
+                </select>
+                <p class="form-hint" id="visibility-hint">Public polls appear in Explore and anyone can vote, including you. Without accounts, Pollspace cannot identify or exclude a poll’s creator.</p>
+                <div class="vote-limit-field" id="vote-limit-field" hidden>
+                    <label class="field-label" for="vote-limit">Maximum private votes</label>
+                    <input class="text-input" type="number" id="vote-limit" min="1" max="1000000" step="1" placeholder="e.g. 20">
+                    <p class="form-hint">Private polls need a vote cap. The cap counts accepted votes, not verified people.</p>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button class="button button--secondary" type="button" id="addOption">＋ Add an option</button>
+                <button class="button" type="submit" id="createButton">Create poll <span aria-hidden="true">↗</span></button>
+            </div>
+            <p class="form-message" id="form-message" role="status" aria-live="polite"></p>
+        </form>
+        <section class="surface-card share-card" id="created-links" hidden aria-live="polite">
+            <p class="eyebrow"><span class="eyebrow-dot"></span> Poll created</p>
+            <h2>Your poll is ready to share</h2>
+            <p class="form-hint">Save your management link somewhere safe. Anyone with it can change this poll’s settings or delete it.</p>
+            <div class="share-link-group" id="invite-link-group">
+                <label class="field-label" for="invite-link">Invite link</label>
+                <div class="copy-row"><input class="text-input" id="invite-link" readonly><button class="button button--secondary copy-button" type="button" data-copy="invite-link">Copy</button></div>
+            </div>
+            <div class="share-link-group">
+                <label class="field-label" for="management-link">Secret management link</label>
+                <div class="copy-row"><input class="text-input" id="management-link" readonly><button class="button button--secondary copy-button" type="button" data-copy="management-link">Copy</button></div>
+            </div>
+            <p class="form-message" id="copy-message" role="status" aria-live="polite"></p>
+            <a class="button button--secondary" href="create.html">Create another poll</a>
+        </section>
+    </main>
+    <footer class="site-footer">Make room for every answer—even the one you didn’t expect.</footer>
+    <script>
+        const API_URL = 'http://localhost:8080/polls';
+        const form = document.getElementById('pollForm');
+        const optionGroup = document.getElementById('option-group');
+        const addOptionButton = document.getElementById('addOption');
+        const createButton = document.getElementById('createButton');
+        const message = document.getElementById('form-message');
+        const maxOptions = 5;
+        const visibility = document.getElementById('visibility');
+        const voteLimitField = document.getElementById('vote-limit-field');
+        const voteLimitInput = document.getElementById('vote-limit');
+        const createdLinks = document.getElementById('created-links');
 
-    navbar {
-        display: block;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        background-color: rgba(0, 0, 0, 0.7);
-        padding: 18px 0;
-        z-index: 1000;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    }
-    ol {
-        display: flex;
-        justify-content: center;
-        list-style: none;
-        padding: 0;
-        margin: 0;
-    }
-    li {
-        margin: 0 25px;
-    }
-    navbar a {
-        color: #fff;
-        text-decoration: none;
-        font-size: 1.1rem;
-        font-weight: 500;
-        transition: color 0.2s;
-    }
-    navbar a:hover {
-        color: #00e6e6;
-    }
-    .main-content {
-        margin-top: 120px;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        width: 100%;
-        padding: 0 10px;
-        box-sizing: border-box;
-    }
-    h1{
-        background-color: rgba(10, 0, 0, 0.8);
-        color: crimson;
-        font-size: 2.5rem;
-        padding: 20px 30px;
-        border-radius: 8px;
-        text-align: center;
-    }
-    h1:hover{
-        color:rgb(250, 0, 61);
-        background-color: rgba(10, 0, 0, 0.9);
-    }
-    p{
-        background: rgba(0, 0, 0, 0.7);
-        color: rgba(0,255,255,0.7);
-        font-size: 1.2rem;
-        padding: 20px 30px;
-        border-radius: 8px;
-        text-align: center;
-        margin: 10px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-    }
-    form {
-        background: rgba(0, 0, 0, 0.7);
-        padding: 1.5rem;
-        border-radius: 8px;
-        max-width: 500px;
-        width: 100%;
-        margin: auto;
-        box-sizing: border-box;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    label {
-        display: block;
-        margin-top: 1rem;
-        background-color: rgba(0, 0, 0, 0.7);
-        color: rgba(0,255,255,0.7);
-    }
-    input[type="text"] {
-        width: 100%;
-        padding: 0.5rem;
-        margin-top: 0.3rem;
-        border: 1px solid #00d6ee;
-        border-radius: 4px;
-        box-sizing: border-box;
-        font-size: 1rem;
-    }
-    .option-group {
-        margin-top: 1rem;
-    }
-    button {
-        display: flex;
-        justify-content: center;
-        margin-top:30px;
-        padding: 10px 20px;
-        font-size: 1.1rem;
-        font-weight: bold;
-        border-radius: 8px;
-        background: linear-gradient(180deg, #000000 0%, #00b3b3 100%);
-        color: black;
-        cursor: pointer;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-        transition: background 0.2s, transform 0.2s; 
-        border: none;
-    }
-    button:hover {
-        background: linear-gradient(180deg, #00b3b3 0%, #000000 100%);
-        transform: translateY(-2px) scale(1.04);
-    }
-    .button-container {
-        display: flex;
-        justify-content: center;
-        margin-top: 20px;
-        width: 100%;
-    }
-    .error {
-        color: red;
-        font-size: 0.9em;
-    }
-    @media (max-width: 600px) {
-        .main-content {
-            margin-top: 70px;
-            padding: 0 2vw;
-        }
-        h1 {
-            font-size: 1.3rem;
-            padding: 10px 6px;
-        }
-        p {
-            font-size: 1rem;
-            padding: 10px 8px;
-        }
-        form {
-            padding: 0.7rem;
-            max-width: 98vw;
-        }
-        label {
-            font-size: 0.98rem;
-        }
-        input[type="text"] {
-            font-size: 0.98rem;
-        }
-        .button-container button, button {
-            font-size: 1rem;
-            padding: 8px 10px;
-        }
-        li {
-            margin: 0 10px;
-        }
-        ol {
-            flex-wrap: wrap;
-        }
-    }
-</style>
-<body>
-    <navbar>
-        <ol>
-            <li><a href="index.html">Home</a></li>
-            <li><a href="view.html">View Polls</a></li>
-            <li><a href="alter.html">Alter Polls</a></li>
-        </ol>
-    </navbar>
-<div class="main-content">
-    <h1>Create Poll</h1>
-    <p>
-        Polling is a powerful way to give everyone a voice and shape decisions together. Remember, "Every vote counts, and every opinion matters." Create your poll and inspire .
-    </p>
-</div>
-<di>
-    <form id="pollForm">
-        <lable for="question">Poll Question</lable>
-        <input type="text" id="question" name="question" placeholder="Enter your poll question here" required>
-        <div class="error" id="error-message" ></div>
-        
-       <div class="option-group" id="option-group">
-        <label for="option1">Option1:</label>
-        <input type="text" id="option1" name="option1" required>
-        <label for="option2">Option2:</label>
-        <input type="text" id="option2" name="option2" required>
-</div>
-<div class="erroe" id="optionsError"></div>
-<div class="button-container" id="option-btn-container">
-    <button type="button" id="addOption">Add More Options</button>
-</div>
-<div class="button-container"><button type="SUBMIT">CREATE POLL</button></div>
-    </form>
-</div>
-</body>
-<script>
-const maxOptions = 5;
-let optionCount = 2;
-
-// Helper to update Remove Option button
-function updateRemoveButton() {
-    let removeBtn = document.getElementById('removeOption');
-    if (optionCount > 2) {
-        if (!removeBtn) {
-            removeBtn = document.createElement('button');
-            removeBtn.type = 'button';
-            removeBtn.id = 'removeOption';
-            removeBtn.textContent = 'Remove Option';
-            removeBtn.style.marginBottom = '10px';
-            removeBtn.onclick = function() {
-                if (optionCount > 2) {
-                    // Remove last label and input
-                    const optionGroup = document.getElementById('option-group');
-                    optionGroup.removeChild(optionGroup.lastElementChild); // input
-                    optionGroup.removeChild(optionGroup.lastElementChild); // label
-                    optionCount--;
-                    // Enable add button if it was disabled
-                    document.getElementById('addOption').disabled = false;
-                    // Remove button if only 2 options left
-                    if (optionCount === 2) {
-                        removeBtn.remove();
-                    }
-                }
-            };
-            // Insert above the option-group
-            const btnContainer = document.getElementById('option-btn-container');
-            btnContainer.parentNode.insertBefore(removeBtn, btnContainer);
-        }
-    } else if (removeBtn) {
-        removeBtn.remove();
-    }
-}
-
-document.getElementById('addOption').addEventListener('click', function() {
-    if (optionCount >= maxOptions) return;
-    optionCount++;
-    const optionGroup = document.getElementById('option-group');
-    const label = document.createElement('label');
-    label.setAttribute('for', `option${optionCount}`);
-    label.textContent = `Option${optionCount}:`;
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.id = `option${optionCount}`;
-    input.name = `option${optionCount}`;
-    input.required = true;
-    optionGroup.appendChild(label);
-    optionGroup.appendChild(input);
-    if (optionCount === maxOptions) {
-        document.getElementById('addOption').disabled = true;
-    }
-    updateRemoveButton();
-});
-
-document.getElementById('pollForm').addEventListener('submit', async function(event) {
-    event.preventDefault(); // Prevent form submission
-
-    const question = document.getElementById('question').value.trim();
-    const options = [];
-    for (let i = 1; i <= optionCount; i++) {
-        const opt = document.getElementById(`option${i}`).value.trim();
-        if (opt) options.push(opt);
-    }
-
-    // Validate question
-    if (question === '') {
-        document.getElementById('error-message').textContent = 'Please enter a poll question.';
-        return;
-    } else {
-        document.getElementById('error-message').textContent = '';
-    }
-
-    // Validate options
-    if (options.length < 2) {
-        document.getElementById('optionsError').textContent = 'Please enter at least two options.';
-        return;
-    } else {
-        document.getElementById('optionsError').textContent = '';
-    }
-
-    // Create poll object
-    const pollData = {
-        question: question,
-        options: options.map(opt =>({voteoption:opt}))
-    };
-
-    // Send poll data to server (replace with your server URL)
-    try {
-        const response = await fetch("http://localhost:8080/polls", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(pollData)
+        visibility.addEventListener('change', () => {
+            const isPrivate = visibility.value === 'private';
+            voteLimitField.hidden = !isPrivate;
+            voteLimitInput.required = isPrivate;
+            document.getElementById('visibility-hint').textContent = isPrivate
+                ? 'Only visitors with the invite link can open this poll. Its vote cap is required.'
+                : 'Public polls appear in Explore and anyone can vote, including you. Without accounts, Pollspace cannot identify or exclude a poll’s creator.';
         });
 
-        if (response.ok) {
-            alert("Poll created successfully!");
-            document.getElementById("pollForm").reset();
-            // Reset options to 2 and remove extra fields/buttons
-            const optionGroup = document.getElementById('option-group');
-            while (optionCount > 2) {
-                optionGroup.removeChild(optionGroup.lastElementChild); // input
-                optionGroup.removeChild(optionGroup.lastElementChild); // label
-                optionCount--;
-            }
-            document.getElementById('addOption').disabled = false;
-            updateRemoveButton();
-        } else {
-            alert("Failed to create poll. Check backend or CORS settings.");
+        function linkFor(page, fragment) {
+            const link = new URL(page, window.location.href);
+            link.hash = fragment;
+            return link.href;
         }
-    } catch (error) {
-        console.error("Error:", error);
-        alert("Error occurred while creating poll.");
-    }
-});
 
-// Initial call to ensure Remove Option is not shown at start
-updateRemoveButton();
-</script>
+        async function copyField(inputId) {
+            const input = document.getElementById(inputId);
+            await navigator.clipboard.writeText(input.value);
+            document.getElementById('copy-message').textContent = 'Link copied to clipboard.';
+            document.getElementById('copy-message').dataset.state = 'success';
+        }
+
+        createdLinks.addEventListener('click', async (event) => {
+            const button = event.target.closest('[data-copy]');
+            if (!button) return;
+            try {
+                await copyField(button.dataset.copy);
+            } catch (error) {
+                console.error('Unable to copy link:', error);
+                document.getElementById(button.dataset.copy).select();
+                document.getElementById('copy-message').textContent = 'Select and copy the link manually.';
+                document.getElementById('copy-message').dataset.state = 'error';
+            }
+        });
+
+        function updateOptionControls() {
+            const fields = optionGroup.querySelectorAll('.option-field');
+            fields.forEach((field, index) => {
+                field.querySelector('.option-number').textContent = String(index + 1);
+                const input = field.querySelector('input');
+                input.id = `option${index + 1}`;
+                input.name = `option${index + 1}`;
+                input.setAttribute('aria-label', `Option ${index + 1}`);
+                input.placeholder = index === 0 ? 'First option' : index === 1 ? 'Second option' : `Option ${index + 1}`;
+                const removeButton = field.querySelector('.remove-option');
+                removeButton.setAttribute('aria-label', `Remove option ${index + 1}`);
+                removeButton.disabled = fields.length <= 2;
+            });
+            addOptionButton.disabled = fields.length >= maxOptions;
+        }
+
+        addOptionButton.addEventListener('click', () => {
+            const nextNumber = optionGroup.querySelectorAll('.option-field').length + 1;
+            const field = document.createElement('div');
+            field.className = 'option-field';
+            field.innerHTML = `<span class="option-number" aria-hidden="true">${nextNumber}</span>
+                <input class="text-input" type="text" id="option${nextNumber}" name="option${nextNumber}" aria-label="Option ${nextNumber}" placeholder="Option ${nextNumber}" maxlength="120" required>
+                <button class="icon-button remove-option" type="button" aria-label="Remove option ${nextNumber}">×</button>`;
+            optionGroup.appendChild(field);
+            updateOptionControls();
+            field.querySelector('input').focus();
+        });
+
+        optionGroup.addEventListener('click', (event) => {
+            const removeButton = event.target.closest('.remove-option');
+            if (!removeButton || removeButton.disabled) return;
+            removeButton.closest('.option-field').remove();
+            updateOptionControls();
+        });
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!form.reportValidity()) return;
+
+            const question = document.getElementById('question').value.trim();
+            const options = Array.from(optionGroup.querySelectorAll('input'))
+                .map((input) => input.value.trim());
+            if (!question || options.some((option) => !option)) {
+                message.dataset.state = 'error';
+                message.textContent = 'Please fill in the question and every option.';
+                return;
+            }
+            const isPublic = visibility.value === 'public';
+            const cap = voteLimitInput.value === '' ? null : Number(voteLimitInput.value);
+            if (!isPublic && (!Number.isInteger(cap) || cap < 1 || cap > 1000000)) {
+                voteLimitInput.setCustomValidity('Enter a whole-number vote cap from 1 to 1,000,000.');
+                voteLimitInput.reportValidity();
+                voteLimitInput.setCustomValidity('');
+                return;
+            }
+
+            createButton.disabled = true;
+            createButton.textContent = 'Creating poll…';
+            message.dataset.state = '';
+            message.textContent = 'Saving your poll…';
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        question,
+                        options,
+                        isPublic,
+                        voteLimit: isPublic ? null : cap
+                    })
+                });
+                if (!response.ok) {
+                    const result = await response.json().catch(() => ({}));
+                    throw new Error(result.message || `The server returned ${response.status}.`);
+                }
+                const result = await response.json();
+
+                form.reset();
+                optionGroup.querySelectorAll('.option-field').forEach((field, index) => {
+                    if (index > 1) field.remove();
+                });
+                updateOptionControls();
+                visibility.dispatchEvent(new Event('change'));
+                message.dataset.state = 'success';
+                message.textContent = isPublic
+                    ? 'Your poll is public and available to everyone on Explore, including you. Pollspace cannot identify creators without accounts.'
+                    : 'Your private poll is ready. Only people with its invite link can open it.';
+                document.getElementById('invite-link-group').hidden = isPublic;
+                document.getElementById('invite-link').value = isPublic
+                    ? new URL('view.html', window.location.href).href
+                    : linkFor('view.html', `invite=${encodeURIComponent(result.inviteToken)}`);
+                document.getElementById('management-link').value = linkFor(
+                    'alter.html', `manage=${encodeURIComponent(result.managementToken)}`);
+                createdLinks.hidden = false;
+                createdLinks.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } catch (error) {
+                console.error('Unable to create poll:', error);
+                message.dataset.state = 'error';
+                message.textContent = 'We couldn’t create your poll. Check that the poll server is running, then try again.';
+            } finally {
+                createButton.disabled = false;
+                createButton.innerHTML = 'Create poll <span aria-hidden="true">↗</span>';
+            }
+        });
+        updateOptionControls();
+    </script>
+</body>
 </html>
