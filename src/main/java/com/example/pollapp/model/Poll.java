@@ -18,6 +18,15 @@ public class Poll {
     @CollectionTable(name = "poll_options", joinColumns = @JoinColumn(name = "poll_id"))
     private List<VoteOption> options;
 
+    @Column(nullable = false)
+    private boolean isPublic = true;
 
+    private Integer voteLimit;
+
+    @Column(length = 64, unique = true)
+    private String inviteTokenHash;
+
+    @Column(length = 64, unique = true)
+    private String managementTokenHash;
 
 }

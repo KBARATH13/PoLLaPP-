@@ -2,6 +2,7 @@ package com.example.pollapp.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.lang.NonNull;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -11,9 +12,14 @@ public class WebConfig {
     public WebMvcConfigurer webMvcConfigurer(){
          return new WebMvcConfigurer(){
              @Override
-             public void addCorsMappings(CorsRegistry registry) {
+             public void addCorsMappings(@NonNull CorsRegistry registry) {
                  registry.addMapping("/**")
-                         .allowedOrigins("http://127.0.0.1:5500/")
+                         .allowedOrigins(
+                                 "http://127.0.0.1:5500",
+                                 "http://localhost:5500",
+                                 "http://127.0.0.1:5501",
+                                 "http://localhost:5501"
+                         )
                          .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                          .allowedHeaders("*")
                          .allowCredentials(true);
