@@ -32,6 +32,49 @@ class PrivatePollApiTest {
     @Test
     @Transactional
     @Rollback
+    void publicVotesRemainAttachedToTheirOptionsAfterPollReload() throws Exception {
+        JsonNode created = objectMapper.readTree(mockMvc.perform(post("/polls")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"question":"Option order check","options":["Yes","No"],"isPublic":true}
+                                """))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        long pollId = created.get("poll").get("id").asLong();
+
+        for (int index = 0; index < 3; index++) {
+            mockMvc.perform(post("/polls/vote")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(java.util.Map.of(
+                                    "pollId", pollId,
+                                    "optionIndex", 0))))
+                    .andExpect(status().isOk());
+        }
+        for (int index = 0; index < 6; index++) {
+            mockMvc.perform(post("/polls/vote")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(java.util.Map.of(
+                                    "pollId", pollId,
+                                    "optionIndex", 1))))
+                    .andExpect(status().isOk());
+        }
+
+        JsonNode publicPolls = objectMapper.readTree(mockMvc.perform(get("/polls"))
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString());
+        JsonNode poll = findPoll(publicPolls, pollId);
+        assertTrue(poll != null);
+
+        assertEquals("Yes", poll.get("options").get(0).get("voteoption").asText());
+        assertEquals(3, poll.get("options").get(0).get("voteCount").asInt());
+        assertEquals("No", poll.get("options").get(1).get("voteoption").asText());
+        assertEquals(6, poll.get("options").get(1).get("voteCount").asInt());
+        assertEquals(9, poll.get("totalVotes").asInt());
+    }
+
+    @Test
+    @Transactional
+    @Rollback
     void privatePollIsInviteOnlyCapsVotesAndCanBePublishedWithManagementLink() throws Exception {
         JsonNode created = objectMapper.readTree(mockMvc.perform(post("/polls")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -42,6 +85,7 @@ class PrivatePollApiTest {
                 .andReturn().getResponse().getContentAsString());
         String inviteToken = created.get("inviteToken").asText();
         String managementToken = created.get("managementToken").asText();
+        long pollId = created.get("poll").get("id").asLong();
         String voterOne = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
         String voterTwo = "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
         String voterThree = "ccccccccccccccccccccccccccccccccccccccccccc";
@@ -52,7 +96,7 @@ class PrivatePollApiTest {
         JsonNode publicPolls = objectMapper.readTree(mockMvc.perform(get("/polls"))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString());
-        assertEquals(0, publicPolls.size());
+        assertTrue(findPoll(publicPolls, pollId) == null);
 
         JsonNode beforeVote = privatePoll(inviteToken, voterOne);
         assertFalse(beforeVote.get("hasVoted").asBoolean());
@@ -114,15 +158,16 @@ class PrivatePollApiTest {
         JsonNode published = objectMapper.readTree(mockMvc.perform(get("/polls"))
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString());
-        assertEquals(1, published.size());
-        assertEquals(2, published.get(0).get("totalVotes").asInt());
+        JsonNode publishedPoll = findPoll(published, pollId);
+        assertTrue(publishedPoll != null);
+        assertEquals(2, publishedPoll.get("totalVotes").asInt());
 
         mockMvc.perform(delete("/polls/manage")
                         .header("X-Poll-Manage", managementToken))
                 .andExpect(status().isNoContent());
-        assertEquals(0, objectMapper.readTree(mockMvc.perform(get("/polls"))
+        assertTrue(findPoll(objectMapper.readTree(mockMvc.perform(get("/polls"))
                 .andExpect(status().isOk())
-                .andReturn().getResponse().getContentAsString()).size());
+                .andReturn().getResponse().getContentAsString()), pollId) == null);
     }
 
     private JsonNode privatePoll(String inviteToken, String voterToken) throws Exception {
@@ -132,6 +177,13 @@ class PrivatePollApiTest {
                 .andExpect(status().isOk())
                 .andReturn().getResponse().getContentAsString();
         return objectMapper.readTree(body);
+    }
+
+    private JsonNode findPoll(JsonNode polls, long pollId) {
+        for (JsonNode candidate : polls) {
+            if (candidate.get("id").asLong() == pollId) return candidate;
+        }
+        return null;
     }
 
 }

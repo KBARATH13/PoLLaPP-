@@ -16,6 +16,7 @@ public class Poll {
     private String question;
     @ElementCollection
     @CollectionTable(name = "poll_options", joinColumns = @JoinColumn(name = "poll_id"))
+    @OrderColumn(name = "option_position")
     private List<VoteOption> options;
 
     @Column(nullable = false)
