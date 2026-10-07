@@ -46,7 +46,7 @@
     </main>
     <footer class="site-footer">A good question travels farther when everyone gets a say.</footer>
     <script>
-        const API_URL = 'http://localhost:8080/polls';
+        const API_URL = window.location.port === '5500' ? 'http://localhost:8080/polls' : '/polls';
         const container = document.getElementById('polls-container');
         const inviteToken = new URLSearchParams(window.location.hash.slice(1)).get('invite');
         const privateMode = Boolean(inviteToken);
@@ -74,17 +74,25 @@
                 return;
             }
             container.innerHTML = polls.map((poll) => {
-                const options = Array.isArray(poll.options) ? poll.options : [];
+                const options = (Array.isArray(poll.options) ? poll.options : [])
+                    .map((option, index) => ({ option, index }));
                 const totalVotes = Number(poll.totalVotes) || 0;
-                const optionMarkup = options.map((option, index) => {
-                    const hasResults = !privateMode || poll.hasVoted;
+                const hasResults = !privateMode || poll.hasVoted;
+                const displayedOptions = hasResults
+                    ? [...options].sort((left, right) =>
+                        (Number(right.option.voteCount) || 0) - (Number(left.option.voteCount) || 0)
+                        || left.index - right.index)
+                    : options;
+                const optionMarkup = displayedOptions.map(({ option, index }) => {
                     const votes = hasResults ? Number(option.voteCount) || 0 : 0;
                     const percentage = totalVotes ? Math.round((votes / totalVotes) * 100) : 0;
-                    const action = poll.hasVoted
-                        ? `<span class="poll-option-count">${votes} ${votes === 1 ? 'vote' : 'votes'} · ${percentage}%</span>`
+                    const voteButton = `<button class="button button--small" type="button" data-vote-poll="${escapeHtml(poll.id)}" data-vote-option="${index}">Vote</button>`;
+                    const resultLabel = `<span class="poll-option-count">${votes} ${votes === 1 ? 'vote' : 'votes'} · ${percentage}%</span>`;
+                    const action = hasResults
+                        ? `${resultLabel}${!privateMode ? voteButton : ''}`
                         : poll.limitReached
                             ? '<span class="poll-option-count limit-reached">Voting limit reached</span>'
-                            : `<button class="button button--small" type="button" data-vote-poll="${escapeHtml(poll.id)}" data-vote-option="${index}">Vote</button>`;
+                            : voteButton;
                     return `<li class="poll-option">
                         <span class="poll-option-name">${escapeHtml(option.voteoption)}</span>
                         ${action}

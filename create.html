@@ -86,7 +86,7 @@
     </main>
     <footer class="site-footer">Make room for every answer—even the one you didn’t expect.</footer>
     <script>
-        const API_URL = 'http://localhost:8080/polls';
+        const API_URL = window.location.port === '5500' ? 'http://localhost:8080/polls' : '/polls';
         const form = document.getElementById('pollForm');
         const optionGroup = document.getElementById('option-group');
         const addOptionButton = document.getElementById('addOption');

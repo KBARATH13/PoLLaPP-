@@ -95,7 +95,7 @@
     </main>
     <footer class="site-footer">Keep your management link to yourself; sharing the invite is all voters need.</footer>
     <script>
-        const API_URL = 'http://localhost:8080/polls';
+        const API_URL = window.location.port === '5500' ? 'http://localhost:8080/polls' : '/polls';
         const params = new URLSearchParams(window.location.hash.slice(1));
         let managementToken = params.get('manage') || '';
         let pollDetails = null;
